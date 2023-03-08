@@ -2,13 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"time"
 
 	log "github.com/DggHQ/dggarchiver-logger"
 	"github.com/DggHQ/dggarchiver-worker/config"
 	"github.com/DggHQ/dggarchiver-worker/ffmpeg"
-	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 func init() {
@@ -54,20 +54,8 @@ func main() {
 		log.Fatalf("Couldn't marshal VOD with ID %s into a JSON object: %v", cfg.VOD.ID, err)
 	}
 
-	msg := amqp.Publishing{
-		ContentType: "application/json",
-		Body:        bytes,
-	}
-
-	err = cfg.AMQPConfig.Channel.PublishWithContext(
-		cfg.AMQPConfig.Context,
-		cfg.AMQPConfig.ExchangeName,
-		cfg.AMQPConfig.QueueName,
-		false,
-		false,
-		msg,
-	)
-	if err != nil {
+	if err := cfg.NATSConfig.NatsConnection.Publish(fmt.Sprintf("%s.upload", cfg.NATSConfig.Topic), bytes); err != nil {
 		log.Errorf("Wasn't able to send message with VOD with ID %s: %v", cfg.VOD.ID, err)
 	}
+	cfg.NATSConfig.NatsConnection.Close()
 }
