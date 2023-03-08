@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"strings"
 
 	log "github.com/DggHQ/dggarchiver-logger"
@@ -17,11 +16,10 @@ import (
 )
 
 // one of the examples from https://github.com/u2takey/ffmpeg-go
-func readFrameAsJpeg(inFileName string, frameNum int) io.Reader {
+func readFrameAsJpeg(inFileName string, timestamp int) io.Reader {
 	buf := bytes.NewBuffer(nil)
-	err := ffmpeg.Input(inFileName).
-		Filter("select", ffmpeg.Args{fmt.Sprintf("gte(n,%d)", frameNum)}).
-		Output("pipe:", ffmpeg.KwArgs{"vframes": 1, "format": "image2", "vcodec": "mjpeg"}).
+	err := ffmpeg.Input(inFileName, ffmpeg.KwArgs{"ss": timestamp}).
+		Output("pipe:", ffmpeg.KwArgs{"frames:v": 1, "format": "image2"}).
 		WithOutput(buf, os.Stdout).
 		Run()
 	if err != nil {
@@ -31,11 +29,11 @@ func readFrameAsJpeg(inFileName string, frameNum int) io.Reader {
 }
 
 // one of the examples from https://github.com/u2takey/ffmpeg-go
-func SaveFrameAsThumbnail(inFileName string, frameNum int, url string) string {
+func SaveFrameAsThumbnail(inFileName string, timestamp int, url string) string {
 	split := strings.Split(inFileName, ".")
 	outFileName := fmt.Sprintf("%s-thumb.jpg", split[0])
 
-	reader := readFrameAsJpeg(inFileName, frameNum)
+	reader := readFrameAsJpeg(inFileName, timestamp)
 	if reader == nil {
 		log.Errorf("Wasn't able to create a thumbnail from \"%s\" (going to try to download one from YouTube)", inFileName)
 		reader = util.DownloadThumbnail(url)
@@ -65,18 +63,4 @@ func GetVideoInfo(inFileName string) *ffprobe.ProbeData {
 		return nil
 	}
 	return data
-}
-
-func CalculateFramerate(data *ffprobe.ProbeData) int {
-	rFrameRate := data.FirstVideoStream().RFrameRate
-	split := strings.Split(rFrameRate, "/")
-	upper, err := strconv.Atoi(split[0])
-	if err != nil {
-		return 0
-	}
-	lower, err := strconv.Atoi(split[1])
-	if err != nil {
-		return 0
-	}
-	return upper / lower
 }

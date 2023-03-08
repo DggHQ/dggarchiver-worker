@@ -45,9 +45,7 @@ func main() {
 
 	log.Infof("Added duration to VOD with ID %s: %ss", cfg.VOD.ID, cfg.VOD.Duration)
 
-	frameRate := ffmpeg.CalculateFramerate(videoInfo)
-
-	cfg.VOD.ThumbnailPath = ffmpeg.SaveFrameAsThumbnail(path, (cfg.VOD.Duration*frameRate)/2, cfg.VOD.Thumbnail)
+	cfg.VOD.ThumbnailPath = ffmpeg.SaveFrameAsThumbnail(path, (cfg.VOD.Duration)/2, cfg.VOD.Thumbnail)
 
 	bytes, err := json.Marshal(cfg.VOD)
 	if err != nil {
