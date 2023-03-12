@@ -9,6 +9,7 @@ WORKDIR /app
 COPY --from=builder /app/dggarchiver-worker .
 COPY --from=builder /app/run.sh .
 RUN apk add --no-cache bash ffmpeg curl gzip
+RUN mkdir -p /videos
 RUN curl -sL $(curl -s https://api.github.com/repos/Kethsar/ytarchive/releases/latest | grep browser_download_url | cut -d\" -f4 | grep -E 'ytarchive_linux_amd64.zip$') | zcat >> ytarchive
 RUN chmod +x ./ytarchive
 RUN chmod +x ./run.sh
