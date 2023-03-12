@@ -28,6 +28,14 @@ type Config struct {
 	VOD        dggarchivermodel.YTVod
 }
 
+type Storage struct {
+	UseS3     bool
+	AccessKey string
+	SecretKey string
+	Endpoint  string
+	VodPath   string
+}
+
 func (cfg *Config) loadDotEnv() {
 	log.Debugf("Loading environment variables")
 	godotenv.Load()

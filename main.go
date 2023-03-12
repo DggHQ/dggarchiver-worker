@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
-	"os"
 	"time"
 
 	log "github.com/DggHQ/dggarchiver-logger"
@@ -11,7 +11,14 @@ import (
 	"github.com/DggHQ/dggarchiver-worker/ffmpeg"
 )
 
+var stor config.Storage
+
 func init() {
+	flag.StringVar(&stor.AccessKey, "s3AccessKey", "", "Sets the S3 Access Key (used when useS3 is true)")
+	flag.StringVar(&stor.SecretKey, "s3SecretKey", "", "Sets the S3 Secret Key (used when useS3 is true)")
+	flag.StringVar(&stor.Endpoint, "s3Endpoint", "", "Sets the S3 Endpoint (used when useS3 is true)")
+	flag.StringVar(&stor.VodPath, "vodPath", "", "Sets the outputh path and file name for the vod file")
+	flag.BoolVar(&stor.UseS3, "useS3", false, "Use S3 Backend for uploading vods to be used with the uploader")
 	loc, err := time.LoadLocation("UTC")
 	if err != nil {
 		log.Fatalf("%s", err)
@@ -20,6 +27,8 @@ func init() {
 }
 
 func main() {
+	flag.Parse()
+	log.Infof("%v", stor.UseS3)
 	cfg := config.Config{}
 	cfg.Initialize()
 
@@ -27,25 +36,17 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	var path string
-
-	if len(os.Args) > 1 {
-		path = os.Args[1]
-	} else {
-		log.Fatalf("No path to video provided")
-	}
-
-	cfg.VOD.Path = path
+	cfg.VOD.Path = stor.VodPath
 
 	log.Infof("Downloaded VOD with ID %s: %s", cfg.VOD.ID, cfg.VOD)
 
-	videoInfo := ffmpeg.GetVideoInfo(path)
+	videoInfo := ffmpeg.GetVideoInfo(stor.VodPath)
 
 	cfg.VOD.Duration = int(videoInfo.Format.DurationSeconds)
 
 	log.Infof("Added duration to VOD with ID %s: %ss", cfg.VOD.ID, cfg.VOD.Duration)
 
-	cfg.VOD.ThumbnailPath = ffmpeg.SaveFrameAsThumbnail(path, (cfg.VOD.Duration)/2, cfg.VOD.Thumbnail)
+	cfg.VOD.ThumbnailPath = ffmpeg.SaveFrameAsThumbnail(stor.VodPath, (cfg.VOD.Duration)/2, cfg.VOD.Thumbnail)
 
 	bytes, err := json.Marshal(cfg.VOD)
 	if err != nil {
