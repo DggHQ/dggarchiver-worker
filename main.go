@@ -28,7 +28,6 @@ func init() {
 
 func main() {
 	flag.Parse()
-	log.Infof("%v", stor.UseS3)
 	cfg := config.Config{}
 	cfg.Initialize()
 
