@@ -6,11 +6,12 @@ COPY . .
 RUN GOOS=linux GOARCH=${TARGETARCH} go install github.com/Kethsar/ytarchive@v0.3.2
 RUN GOOS=linux GOARCH=${TARGETARCH} go build
 
-FROM alpine:3.17
+FROM python:alpine3.17
 WORKDIR /app
 COPY --from=builder /app/dggarchiver-worker .
 COPY --from=builder /app/run.sh .
 COPY --from=builder /go/bin/ytarchive .
 RUN apk add --no-cache bash ffmpeg
+RUN pip install --user -U yt-dlp
 RUN chmod +x ./run.sh
 CMD ["./run.sh"]
