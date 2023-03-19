@@ -12,6 +12,6 @@ COPY --from=builder /app/dggarchiver-worker .
 COPY --from=builder /app/run.sh .
 COPY --from=builder /go/bin/ytarchive .
 RUN apk add --no-cache bash ffmpeg
-RUN pip install --user -U yt-dlp
+RUN pip install -U yt-dlp
 RUN chmod +x ./run.sh
 CMD ["./run.sh"]
