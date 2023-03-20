@@ -13,11 +13,11 @@ set -Eeuo pipefail
 case "$LIVESTREAM_PLATFORM" in
 	"youtube" )
 		echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] [YT] Recording $LIVESTREAM_ID with ytarchive..."
-		./ytarchive -o "/videos/${LIVESTREAM_PLATFORM}%(id)s" "$LIVESTREAM_URL" 720p/720p60/480p/360p/best
+		./ytarchive -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s" "$LIVESTREAM_URL" 720p/720p60/480p/360p/best
 		;;
 	"rumble" )
 		echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] [Rumble] Recording $LIVESTREAM_ID with yt-dlp..."
-		yt-dlp -f 'best[height<=720][fps<=?30]' -o "/videos/${LIVESTREAM_PLATFORM}%(id)s.%(ext)s" "$LIVESTREAM_URL"
+		yt-dlp -f 'best[height<=720][fps<=?30]' -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		;;
 	"kick" )
 		echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] [Kick] Recording $LIVESTREAM_ID with yt-dlp..."
