@@ -17,11 +17,11 @@ case "$LIVESTREAM_PLATFORM" in
 		;;
 	"rumble" )
 		echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] [Rumble] Recording $LIVESTREAM_ID with yt-dlp..."
-		yt-dlp -f 'best[height<=720][fps<=?30]' -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
+		yt-dlp -f 'best[height=720][fps=30] / best[height=720][fps=60] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		;;
 	"kick" )
 		echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] [Kick] Recording $LIVESTREAM_ID with yt-dlp..."
-		yt-dlp --downloader ffmpeg --hls-use-mpegts -f 'best[height<=720][fps<=?30]' -o "${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.%(ext)s" "$LIVESTREAM_URL"
+		yt-dlp --downloader ffmpeg --hls-use-mpegts -f 'best[height=720][fps=30] / best[height=720][fps=60] / best[height=480] / best[height=360] / best' -o "${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.%(ext)s" "$LIVESTREAM_URL"
 		;;
 esac
 
