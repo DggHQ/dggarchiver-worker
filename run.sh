@@ -23,6 +23,7 @@ case "$LIVESTREAM_PLATFORM" in
 		echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] [Kick] Recording $LIVESTREAM_ID with yt-dlp..."
 		yt-dlp --downloader ffmpeg --hls-use-mpegts -f 'best[height=720][fps=30] / best[height=720][fps=60] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$LIVESTREAM_URL"
 		ffmpeg -y -loglevel "repeat+info" -i "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.mp4" -map 0 -dn -ignore_unknown -c copy -f mp4 "-bsf:a" aac_adtstoasc -movflags "+faststart" "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4"
+		rm "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.mp4"
 		;;
 esac
 
