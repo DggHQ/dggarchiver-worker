@@ -25,7 +25,7 @@ type NATSConfig struct {
 type Config struct {
 	Flags      Flags
 	NATSConfig NATSConfig
-	VOD        dggarchivermodel.YTVod
+	VOD        dggarchivermodel.VOD
 }
 
 func (cfg *Config) loadDotEnv() {
