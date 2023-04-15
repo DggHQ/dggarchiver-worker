@@ -29,7 +29,7 @@ case "$LIVESTREAM_PLATFORM" in
 			yt-dlp --downloader ffmpeg --hls-use-mpegts -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$LIVESTREAM_URL"
 		elif [ "${KICK_DOWNLOADER}" = "N_m3u8DL-RE" ]; then
 			TMP_EXTENSION='ts'
-			./N_m3u8DL-RE "$LIVESTREAM_URL" --save-dir /videos/ --save-name "${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp" -sv res="720|480|360" -M format=mp4 --live-real-time-merge --live-pipe-mux --live-keep-segments=false
+			N_m3u8DL-RE "$LIVESTREAM_URL" --save-dir /videos/ --save-name "${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp" -sv res="720|480|360" -M format=mp4 --live-real-time-merge --live-pipe-mux --live-keep-segments=false
 		else
 			yt-dlp --downloader ffmpeg --hls-use-mpegts -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$LIVESTREAM_URL"
 		fi
