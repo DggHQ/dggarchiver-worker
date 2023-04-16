@@ -9,14 +9,15 @@ RUN GOOS=linux GOARCH=${TARGETARCH} go build -v
 
 FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine as builder-dotnet
 ARG M3U8DL_VERSION='v0.1.6-beta'
-ARG M3U8DL_PLATFORM='linux-musl-x64'
 ARG TARGETARCH
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-dotnet"
 WORKDIR /app
 RUN apk add --no-cache git build-base icu-dev curl-dev zlib-dev krb5-dev
 RUN git clone https://github.com/nilaoda/N_m3u8DL-RE.git --single-branch --branch ${M3U8DL_VERSION} repo
-RUN if [ "$TARGETARCH" = "arm64" ] ; then export M3U8DL_PLATFORM='linux-arm64' ; fi &&\ 
-	dotnet publish repo/src/N_m3u8DL-RE -r ${M3U8DL_PLATFORM} -c Release -o N_m3u8DL-RE
+RUN if [ $TARGETARCH = amd64 ] ; \
+	then dotnet publish repo/src/N_m3u8DL-RE -r linux-musl-x64 -c Release -o N_m3u8DL-RE ; \
+	else dotnet publish repo/src/N_m3u8DL-RE -r linux-arm64 -c Release -p:CppCompilerAndLinker=clang-9 -p:SysRoot=/crossrootfs/arm64 -o N_m3u8DL-RE ; \
+	fi
 
 FROM python:alpine3.17
 WORKDIR /app
