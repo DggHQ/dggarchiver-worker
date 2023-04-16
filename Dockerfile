@@ -1,27 +1,30 @@
-FROM golang:alpine as builder
-ARG M3U8DL_PLATFORM='linux-x64'
+FROM golang:alpine as builder-go
+ARG YTARCHIVE_VERSION='v0.3.2'
 ARG TARGETARCH
-LABEL builder=true multistage_tag="dggarchiver-worker-builder"
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-go"
 WORKDIR /app
 COPY . .
-RUN apk add --no-cache curl jq
-RUN if [ "$TARGETARCH" = "arm64" ] ; then export M3U8DL_PLATFORM='linux-arm64' ; fi &&\ 
-	curl https://api.github.com/repos/nilaoda/N_m3u8DL-RE/releases/latest\ 
-	| jq -r ".assets[] | select(.browser_download_url | contains(\"${M3U8DL_PLATFORM}\")) | .browser_download_url"\ 
-	| xargs wget -O m3u8dl.tar.gz\ 
-	&& tar zxf m3u8dl.tar.gz --strip-components 1\ 
-	&& rm m3u8dl.tar.gz\ 
-	&& chmod +x ./N_m3u8DL-RE
-RUN GOOS=linux GOARCH=${TARGETARCH} go install github.com/Kethsar/ytarchive@v0.3.2
+RUN GOOS=linux GOARCH=${TARGETARCH} go install github.com/Kethsar/ytarchive@${YTARCHIVE_VERSION}
 RUN GOOS=linux GOARCH=${TARGETARCH} go build -v
+
+FROM mcr.microsoft.com/dotnet/sdk:7.0-alpine as builder-dotnet
+ARG M3U8DL_VERSION='v0.1.6-beta'
+ARG M3U8DL_PLATFORM='linux-musl-x64'
+ARG TARGETARCH
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-dotnet"
+WORKDIR /app
+RUN apk add --no-cache git build-base icu-dev curl-dev zlib-dev krb5-dev
+RUN git clone https://github.com/nilaoda/N_m3u8DL-RE.git --single-branch --branch ${M3U8DL_VERSION} repo
+RUN if [ "$TARGETARCH" = "arm64" ] ; then export M3U8DL_PLATFORM='linux-arm64' ; fi &&\ 
+	dotnet publish repo/src/N_m3u8DL-RE -r ${M3U8DL_PLATFORM} -c Release -o N_m3u8DL-RE
 
 FROM python:alpine3.17
 WORKDIR /app
-COPY --from=builder /app/dggarchiver-worker .
-COPY --from=builder /app/run.sh .
-COPY --from=builder /go/bin/ytarchive /usr/bin/
-COPY --from=builder /app/N_m3u8DL-RE /usr/bin/
-RUN apk add --no-cache bash ffmpeg
+COPY --from=builder-go /app/dggarchiver-worker .
+COPY --from=builder-go /app/run.sh .
+COPY --from=builder-go /go/bin/ytarchive /usr/bin/
+COPY --from=builder-dotnet /app/N_m3u8DL-RE /usr/bin/
+RUN apk add --no-cache bash ffmpeg icu
 RUN pip install -U yt-dlp
 RUN chmod +x ./run.sh
 CMD ["./run.sh"]
