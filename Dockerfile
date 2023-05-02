@@ -12,12 +12,10 @@ ARG M3U8DL_VERSION='v0.1.6-beta'
 ARG TARGETARCH
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-dotnet"
 WORKDIR /app
-RUN apk add --no-cache git build-base icu-dev curl-dev zlib-dev krb5-dev
-RUN git clone https://github.com/nilaoda/N_m3u8DL-RE.git --single-branch --branch ${M3U8DL_VERSION} repo
-RUN if [ $TARGETARCH = amd64 ] ; \
-	then dotnet publish repo/src/N_m3u8DL-RE -r linux-musl-x64 -c Release -o N_m3u8DL-RE ; \
-	else dotnet publish repo/src/N_m3u8DL-RE -r linux-arm64 -c Release -p:CppCompilerAndLinker=clang-9 -p:SysRoot=/crossrootfs/arm64 -o N_m3u8DL-RE ; \
-	fi
+COPY --from=builder-go /app/build-dotnet.sh .
+RUN chmod +x ./build-dotnet.sh
+RUN apk add --no-cache git build-base icu-dev curl-dev zlib-dev krb5-dev 
+RUN ./build-dotnet.sh
 
 FROM python:alpine3.17
 WORKDIR /app
