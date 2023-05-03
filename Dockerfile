@@ -14,7 +14,7 @@ LABEL builder=true multistage_tag="dggarchiver-worker-builder-dotnet"
 WORKDIR /app
 COPY --from=builder-go /app/build-dotnet.sh .
 RUN chmod +x ./build-dotnet.sh
-RUN apk add --no-cache git build-base icu-dev curl-dev zlib-dev krb5-dev 
+RUN apk add --no-cache git build-base icu-dev curl-dev zlib-dev krb5-dev upx
 RUN ./build-dotnet.sh
 
 FROM python:alpine3.17
@@ -22,7 +22,7 @@ WORKDIR /app
 COPY --from=builder-go /app/dggarchiver-worker .
 COPY --from=builder-go /app/run.sh .
 COPY --from=builder-go /go/bin/ytarchive /usr/bin/
-COPY --from=builder-dotnet /app/N_m3u8DL-RE /usr/bin/
+COPY --from=builder-dotnet /app/N_m3u8DL-RE/N_m3u8DL-RE /usr/bin/
 RUN apk add --no-cache bash ffmpeg icu
 RUN pip install -U yt-dlp
 RUN chmod +x ./run.sh
