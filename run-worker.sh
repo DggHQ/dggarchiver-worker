@@ -1,29 +1,31 @@
-#!/bin/bash
-echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] LIVESTREAM_INFO: $LIVESTREAM_INFO"
-echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] LIVESTREAM_ID: $LIVESTREAM_ID"
-echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] LIVESTREAM_URL: $LIVESTREAM_URL"
-echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] LIVESTREAM_PLATFORM: $LIVESTREAM_PLATFORM"
+#!/bin/ash
+#shellcheck shell=dash
+
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] LIVESTREAM_INFO: $LIVESTREAM_INFO"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] LIVESTREAM_ID: $LIVESTREAM_ID"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] LIVESTREAM_URL: $LIVESTREAM_URL"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] LIVESTREAM_PLATFORM: $LIVESTREAM_PLATFORM"
 if [ "$LIVESTREAM_PLATFORM" = "kick" ]; then
-	echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] KICK_DOWNLOADER: $KICK_DOWNLOADER"
+	echo "[$(date '+%Y-%m-%d %H:%M:%S')] KICK_DOWNLOADER: $KICK_DOWNLOADER"
 fi
-echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] NATS_HOST: $NATS_HOST"
-echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] NATS_TOPIC: $NATS_TOPIC"
-echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] VERBOSE: $VERBOSE"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] NATS_HOST: $NATS_HOST"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] NATS_TOPIC: $NATS_TOPIC"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] VERBOSE: $VERBOSE"
 
 set -Eeuo pipefail
 
 # start downloading strim
 case "$LIVESTREAM_PLATFORM" in
 	"youtube" )
-		echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] [YT] Recording $LIVESTREAM_ID with ytarchive..."
+		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [YT] Recording $LIVESTREAM_ID with ytarchive..."
 		ytarchive -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s" "$LIVESTREAM_URL" 720p/720p60/480p/360p/best
 		;;
 	"rumble" )
-		echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] [Rumble] Recording $LIVESTREAM_ID with yt-dlp..."
+		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [Rumble] Recording $LIVESTREAM_ID with yt-dlp..."
 		yt-dlp -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		;;
 	"kick" )
-		echo "[$(date '+%Y-%m-%d %H:%M:%S.%N %Z')] [Kick] Recording $LIVESTREAM_ID with ${KICK_DOWNLOADER:=yt-dlp}..."
+		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [Kick] Recording $LIVESTREAM_ID with ${KICK_DOWNLOADER:=yt-dlp}..."
 		export TMP_EXTENSION='mp4'
 		if [ "${KICK_DOWNLOADER}" = "yt-dlp" ]; then
 			yt-dlp --downloader ffmpeg --hls-use-mpegts -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$LIVESTREAM_URL"
@@ -39,4 +41,4 @@ case "$LIVESTREAM_PLATFORM" in
 esac
 
 # start processing
-./dggarchiver-worker /videos/"${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}".mp4
+worker /videos/"${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}".mp4
