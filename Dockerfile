@@ -58,6 +58,7 @@ RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --channel 7.0
 RUN ./build-dotnet.sh
 
+# main image
 FROM alpine:3.17
 WORKDIR /app
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
