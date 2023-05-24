@@ -17,8 +17,8 @@ set -Eeuo pipefail
 # start downloading strim
 case "$LIVESTREAM_PLATFORM" in
 	"youtube" )
-		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [YT] Recording $LIVESTREAM_ID with ytarchive..."
-		ytarchive -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s" "$LIVESTREAM_URL" 720p/720p60/480p/360p/best
+		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [YT] Recording $LIVESTREAM_ID with yt-dlp..."
+		yt-dlp --retries 25 --file-access-retries 25 -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		;;
 	"rumble" )
 		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [Rumble] Recording $LIVESTREAM_ID with yt-dlp..."
