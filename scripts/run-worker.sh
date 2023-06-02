@@ -18,6 +18,11 @@ case "$LIVESTREAM_PLATFORM" in
 		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [YT] Recording $LIVESTREAM_ID with ${LIVESTREAM_DOWNLOADER}..."
 		if [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp" ]; then
 			yt-dlp --retries 25 --file-access-retries 25 -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
+		elif [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp/piped" ]; then
+			PIPED_URL=$(curl -s "https://pipedapi.kavin.rocks/streams/$LIVESTREAM_ID" | jq -r .hls)
+			yt-dlp --retries 25 --file-access-retries 25 --downloader ffmpeg --hls-use-mpegts --downloader-args ffmpeg:'-max_reload 75 -m3u8_hold_counters 75 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_on_network_error 1 -reconnect_on_http_error 504 -reconnect_delay_max 256' -f 'bestvideo[height=720][fps=30]+bestaudio / bestvideo[height=720]+bestaudio / bestvideo[height=480]+bestaudio / bestvideo[height=360]+bestaudio / bestvideo+bestaudio' -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$PIPED_URL"
+			ffmpeg -y -loglevel "repeat+info" -i "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.mp4" -map 0 -dn -ignore_unknown -c copy -f mp4 "-bsf:a" aac_adtstoasc -movflags "+faststart" "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4"
+			rm "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.mp4"
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "ytarchive" ]; then
 			ytarchive --threads 2 -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s" "$LIVESTREAM_URL" 720p/720p60/480p/360p/best
 		else
