@@ -26,18 +26,18 @@ case "$LIVESTREAM_PLATFORM" in
 		;;
 	"rumble" )
 		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [Rumble] Recording $LIVESTREAM_ID with yt-dlp..."
-		yt-dlp --retries 25 --file-access-retries 25 -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
+		yt-dlp --retries 25 --file-access-retries 25 --downloader-args ffmpeg:'-max_reload 75 -m3u8_hold_counters 75 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_on_network_error 1 -reconnect_on_http_error 504 -reconnect_delay_max 256' -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		;;
 	"kick" )
 		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [Kick] Recording $LIVESTREAM_ID with ${LIVESTREAM_DOWNLOADER}..."
 		export TMP_EXTENSION='mp4'
 		if [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp" ]; then
-			yt-dlp --retries 25 --file-access-retries 25 --downloader ffmpeg --hls-use-mpegts -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$LIVESTREAM_URL"
+			yt-dlp --retries 25 --file-access-retries 25 --downloader ffmpeg --hls-use-mpegts --downloader-args ffmpeg:'-max_reload 75 -m3u8_hold_counters 75 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_on_network_error 1 -reconnect_on_http_error 504 -reconnect_delay_max 256' -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$LIVESTREAM_URL"
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "N_m3u8DL-RE" ]; then
 			TMP_EXTENSION='ts'
 			N_m3u8DL-RE "$LIVESTREAM_URL" --save-dir /videos/ --save-name "${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp" -sv res="720|480|360" -M format=mp4 --live-real-time-merge --live-pipe-mux --live-keep-segments=false
 		else
-			yt-dlp --retries 25 --file-access-retries 25 --downloader ffmpeg --hls-use-mpegts -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$LIVESTREAM_URL"
+			yt-dlp --retries 25 --file-access-retries 25 --downloader ffmpeg --hls-use-mpegts --downloader-args ffmpeg:'-max_reload 75 -m3u8_hold_counters 75 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_on_network_error 1 -reconnect_on_http_error 504 -reconnect_delay_max 256' -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$LIVESTREAM_URL"
 		fi
 		ffmpeg -y -loglevel "repeat+info" -i "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}" -map 0 -dn -ignore_unknown -c copy -f mp4 "-bsf:a" aac_adtstoasc -movflags "+faststart" "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4"
 		rm "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}"
