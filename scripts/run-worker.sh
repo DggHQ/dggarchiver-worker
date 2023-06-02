@@ -19,7 +19,7 @@ case "$LIVESTREAM_PLATFORM" in
 		if [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp" ]; then
 			yt-dlp --retries 25 --file-access-retries 25 -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "ytarchive" ]; then
-			ytarchive -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s" "$LIVESTREAM_URL" 720p/720p60/480p/360p/best
+			ytarchive --threads 2 -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s" "$LIVESTREAM_URL" 720p/720p60/480p/360p/best
 		else
 			yt-dlp --retries 25 --file-access-retries 25 -f 'best[height=720][fps=30] / best[height=720] / best[height=480] / best[height=360] / best' -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		fi
