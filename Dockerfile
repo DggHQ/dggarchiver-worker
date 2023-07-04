@@ -1,21 +1,33 @@
 # downloader versions
 # https://github.com/Kethsar/ytarchive/releases/latest
-ARG YTARCHIVE_VERSION='v0.3.2'
+ARG YTARCHIVE_VERSION='latest'
 # https://github.com/yt-dlp/yt-dlp/releases/latest
 ARG YTDLP_VERSION='2023.03.04'
 # https://github.com/nilaoda/N_m3u8DL-RE/releases/latest
 ARG M3U8DL_VERSION='v0.1.6-beta'
 
 # building the main executable
-FROM golang:alpine as base
+FROM golang:alpine as builder-base
 LABEL builder=true multistage_tag="dggarchiver-worker-builder"
 RUN apk add --no-cache upx ca-certificates tzdata
 
-FROM base as builder
+FROM builder-base as builder-modules
 LABEL builder=true multistage_tag="dggarchiver-worker-builder"
 ARG TARGETARCH
 WORKDIR /build
-COPY . .
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
+RUN go mod verify
+
+FROM builder-modules as builder
+LABEL builder=true multistage_tag="dggarchiver-worker-builder"
+ARG TARGETARCH
+WORKDIR /build
+COPY main.go .
+COPY ./config ./config
+COPY ./ffmpeg ./ffmpeg
+COPY ./util ./util
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -ldflags "-s -w" -o worker -v
 RUN upx --best --lzma worker
 
@@ -52,21 +64,23 @@ LABEL builder=true multistage_tag="dggarchiver-worker-builder-m3u8dl"
 ARG TARGETARCH
 ARG M3U8DL_VERSION
 WORKDIR /build
-COPY --chmod=0755 ./build-dotnet.sh .
+COPY --chmod=0755 ./scripts/build-dotnet.sh .
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
 RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --channel 7.0
 RUN ./build-dotnet.sh
 
 # main image
-FROM alpine:3.17
+FROM alpine:3.17 as base
+RUN apk add --no-cache ffmpeg icu
+
+FROM base
 WORKDIR /app
 COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
 COPY --from=builder /build/worker /usr/bin/
-COPY --chmod=0755 ./run-worker.sh /usr/bin/run-worker
+COPY --chmod=0755 ./scripts/run-worker.sh /usr/bin/run-worker
 COPY --from=builder-ytarchive /go/bin/ytarchive /usr/bin/
 COPY --from=builder-ytdlp /build/dist/yt-dlp /usr/bin/
 COPY --from=builder-m3u8dl /build/artifacts/N_m3u8DL-RE /usr/bin/
-RUN apk add --no-cache ffmpeg icu
 CMD ["run-worker"]
