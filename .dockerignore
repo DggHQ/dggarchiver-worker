@@ -1,3 +1,4 @@
-dggarchiver-worker*
-*.env
+.env
+config.yaml
+target/
 .vscode
