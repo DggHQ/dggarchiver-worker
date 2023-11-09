@@ -1,6 +1,6 @@
 # downloader versions
 # https://github.com/Kethsar/ytarchive/releases/latest
-ARG YTARCHIVE_VERSION='latest'
+ARG YTARCHIVE_VERSION='dev'
 # https://github.com/yt-dlp/yt-dlp/releases/latest
 ARG YTDLP_VERSION='2023.07.06'
 # https://github.com/nilaoda/N_m3u8DL-RE/releases/latest
