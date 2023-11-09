@@ -28,7 +28,7 @@ COPY main.go .
 COPY ./config ./config
 COPY ./ffmpeg ./ffmpeg
 COPY ./util ./util
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -ldflags "-s -w" -o worker -v
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -tags netgo -trimpath -ldflags '-s -w -extldflags="-static"' -v -o worker
 RUN upx --best --lzma worker
 
 # building ytarchive
