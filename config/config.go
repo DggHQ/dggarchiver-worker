@@ -30,7 +30,7 @@ type Config struct {
 
 func (cfg *Config) loadDotEnv() {
 	log.Debugf("Loading environment variables")
-	godotenv.Load()
+	_ = godotenv.Load()
 
 	// Flags
 	verbose := strings.ToLower(os.Getenv("VERBOSE"))
@@ -67,7 +67,6 @@ func (cfg *Config) loadNats() {
 	// Connect to NATS server
 	nc, err := nats.Connect(cfg.NATSConfig.Host, nil, nats.PingInterval(20*time.Second), nats.MaxPingsOutstanding(5))
 	if err != nil {
-		log.Fatalf("Wasn't able to declare the AMQP queue: %s", err)
 		log.Fatalf("Could not connect to NATS server: %s", err)
 	}
 	log.Infof("Successfully connected to NATS server: %s", cfg.NATSConfig.Host)
