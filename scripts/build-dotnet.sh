@@ -10,7 +10,7 @@ then
 else
 	sed -i "s/== 'linux-arm64'/== 'linux-musl-arm64'/" repo/src/N_m3u8DL-RE/Directory.Build.props
 	sed -i 's/aarch64-linux-gnu-objcopy/aarch64-alpine-linux-musl-objcopy/' repo/src/N_m3u8DL-RE/Directory.Build.props
-	/root/.dotnet/dotnet publish repo/src/N_m3u8DL-RE -r linux-musl-arm64 -c Release -p:StripSymbols=true -p:CppCompilerAndLinker=clang-15 -p:SysRoot=/crossrootfs/arm64 -o artifacts
+	/root/.dotnet/dotnet publish repo/src/N_m3u8DL-RE -r linux-musl-arm64 -c Release -p:StripSymbols=true -p:CppCompilerAndLinker=clang-18 -p:SysRoot=/crossrootfs/arm64 -o artifacts
 fi
 
 upx --best --lzma artifacts/N_m3u8DL-RE
