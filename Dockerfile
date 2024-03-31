@@ -46,9 +46,9 @@ ARG YTDLP_VERSION
 WORKDIR /build
 RUN apk add --no-cache git ffmpeg binutils
 RUN git clone https://github.com/yt-dlp/yt-dlp.git --single-branch --branch ${YTDLP_VERSION} .
-RUN python3 -m pip install -U pyinstaller -r requirements.txt
+RUN python3 devscripts/install_deps.py --include pyinstaller
 RUN python3 devscripts/make_lazy_extractors.py
-RUN python3 pyinst.py -n yt-dlp
+RUN python3 -m bundle.pyinstaller --name=yt-dlp
 
 # building N_m3u8DL-RE
 FROM mcr.microsoft.com/dotnet-buildtools/prereqs:alpine-3.17 as builder-dotnet-amd64
