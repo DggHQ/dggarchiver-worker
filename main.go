@@ -56,4 +56,6 @@ func main() {
 		log.Errorf("Wasn't able to send message with VOD with ID %s: %v", cfg.VOD.ID, err)
 	}
 	cfg.NATSConfig.NatsConnection.Close()
+
+	fmt.Println(string(bytes))
 }
