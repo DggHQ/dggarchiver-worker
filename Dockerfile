@@ -2,7 +2,7 @@
 # https://github.com/Kethsar/ytarchive/releases/latest
 ARG YTARCHIVE_VERSION='dev'
 # https://github.com/yt-dlp/yt-dlp/releases/latest
-ARG YTDLP_VERSION='2024.05.27'
+ARG YTDLP_VERSION='2024.07.09'
 # https://github.com/nilaoda/N_m3u8DL-RE/releases/latest
 ARG M3U8DL_VERSION='v0.2.0-beta'
 
