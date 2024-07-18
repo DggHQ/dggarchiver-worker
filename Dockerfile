@@ -1,17 +1,17 @@
 # downloader versions
 # https://github.com/Kethsar/ytarchive/releases/latest
-ARG YTARCHIVE_VERSION='dev'
+ARG YTARCHIVE_VERSION='dev2'
 # https://github.com/yt-dlp/yt-dlp/releases/latest
 ARG YTDLP_VERSION='2024.07.09'
 # https://github.com/nilaoda/N_m3u8DL-RE/releases/latest
 ARG M3U8DL_VERSION='v0.2.0-beta'
 
 # building the main executable
-FROM golang:alpine as builder-base
+FROM golang:alpine AS builder-base
 LABEL builder=true multistage_tag="dggarchiver-worker-builder"
 RUN apk add --no-cache upx ca-certificates tzdata
 
-FROM builder-base as builder-modules
+FROM builder-base AS builder-modules
 LABEL builder=true multistage_tag="dggarchiver-worker-builder"
 ARG TARGETARCH
 WORKDIR /build
@@ -20,7 +20,7 @@ COPY go.sum .
 RUN go mod download
 RUN go mod verify
 
-FROM builder-modules as builder
+FROM builder-modules AS builder
 LABEL builder=true multistage_tag="dggarchiver-worker-builder"
 ARG TARGETARCH
 WORKDIR /build
@@ -32,15 +32,15 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -tags netgo -trimpath
 RUN upx --best --lzma worker
 
 # building ytarchive
-FROM golang:alpine as builder-ytarchive
+FROM golang:alpine AS builder-ytarchive
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-ytarchive"
 ARG TARGETARCH
 ARG YTARCHIVE_VERSION
 WORKDIR /build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go install github.com/Kethsar/ytarchive@${YTARCHIVE_VERSION}
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go install github.com/vyneer/ytarchive@${YTARCHIVE_VERSION}
 
 # building yt-dlp
-FROM python:alpine3.17 as builder-ytdlp
+FROM python:alpine3.17 AS builder-ytdlp
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-ytdlp"
 ARG YTDLP_VERSION
 WORKDIR /build
@@ -51,15 +51,15 @@ RUN python3 devscripts/make_lazy_extractors.py
 RUN python3 -m bundle.pyinstaller --name=yt-dlp
 
 # building N_m3u8DL-RE
-FROM mcr.microsoft.com/dotnet-buildtools/prereqs:alpine-3.17 as builder-dotnet-amd64
+FROM mcr.microsoft.com/dotnet-buildtools/prereqs:alpine-3.17 AS builder-dotnet-amd64
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-m3u8dl"
 RUN apk add --no-cache upx
 
-FROM mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-22.04-cross-arm64-alpine as builder-dotnet-arm64
+FROM mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-22.04-cross-arm64-alpine AS builder-dotnet-arm64
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-m3u8dl"
 RUN apt-get update && apt-get install -y upx
 
-FROM builder-dotnet-${TARGETARCH} as builder-m3u8dl
+FROM builder-dotnet-${TARGETARCH} AS builder-m3u8dl
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-m3u8dl"
 ARG TARGETARCH
 ARG M3U8DL_VERSION
@@ -71,7 +71,7 @@ RUN ./dotnet-install.sh --channel 8.0
 RUN ./build-dotnet.sh
 
 # main image
-FROM alpine:3.17 as base
+FROM alpine:3.17 AS base
 RUN apk add --no-cache ffmpeg icu
 
 FROM base
