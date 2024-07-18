@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/DggHQ/dggarchiver-logger v0.0.0-20230224190431-3025eee98c2d
-	github.com/DggHQ/dggarchiver-model v0.0.0-20230525000132-7fa749218fac
+	github.com/DggHQ/dggarchiver-model v0.0.0-20240718093510-3b74301ce748
 	github.com/disintegration/imaging v1.6.2
 	github.com/joho/godotenv v1.5.1
 	github.com/nats-io/nats.go v1.26.0
@@ -16,6 +16,8 @@ require (
 	github.com/apex/log v1.9.0 // indirect
 	github.com/aws/aws-sdk-go v1.44.274 // indirect
 	github.com/golang/protobuf v1.5.0 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/nats-io/nats-server/v2 v2.9.15 // indirect
@@ -29,4 +31,5 @@ require (
 	golang.org/x/sys v0.8.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
+	gorm.io/gorm v1.25.10 // indirect
 )
