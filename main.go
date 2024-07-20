@@ -19,6 +19,16 @@ func init() {
 	time.Local = loc
 }
 
+func calculateEndTime(startTime string, duration int) (string, error) {
+	parsed, err := time.Parse(time.RFC3339, startTime)
+	if err != nil {
+		return "", err
+	}
+
+	endTimeParsed := parsed.Add(time.Second * time.Duration(duration))
+	return endTimeParsed.Format(time.RFC3339), nil
+}
+
 func main() {
 	cfg := config.Config{}
 	cfg.Initialize()
@@ -47,15 +57,21 @@ func main() {
 
 	cfg.VOD.ThumbnailPath = ffmpeg.SaveFrameAsThumbnail(path, (cfg.VOD.Duration)/2, cfg.VOD.Thumbnail)
 
+	var err error
+	cfg.VOD.EndTime, err = calculateEndTime(cfg.VOD.StartTime, cfg.VOD.Duration)
+	if err != nil {
+		log.Fatalf("Wasn't able to calculate end time for VOD with ID %s (dur: %d): %v", cfg.VOD.VID, cfg.VOD.Duration, err)
+	}
+
 	bytes, err := json.Marshal(cfg.VOD)
 	if err != nil {
 		log.Fatalf("Couldn't marshal VOD with ID %s into a JSON object: %v", cfg.VOD.VID, err)
 	}
 
+	fmt.Println(string(bytes))
+
 	if err := cfg.NATSConfig.NatsConnection.Publish(fmt.Sprintf("%s.upload", cfg.NATSConfig.Topic), bytes); err != nil {
 		log.Errorf("Wasn't able to send message with VOD with ID %s: %v", cfg.VOD.VID, err)
 	}
 	cfg.NATSConfig.NatsConnection.Close()
-
-	fmt.Println(string(bytes))
 }
