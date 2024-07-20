@@ -53,7 +53,7 @@ func main() {
 
 	cfg.VOD.Duration = int(videoInfo.Format.DurationSeconds)
 
-	log.Infof("Added duration to VOD with ID %s: %ss", cfg.VOD.VID, cfg.VOD.Duration)
+	log.Infof("Added duration to VOD with ID %s: %ds", cfg.VOD.VID, cfg.VOD.Duration)
 
 	cfg.VOD.ThumbnailPath = ffmpeg.SaveFrameAsThumbnail(path, (cfg.VOD.Duration)/2, cfg.VOD.Thumbnail)
 
