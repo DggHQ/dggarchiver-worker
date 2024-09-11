@@ -50,7 +50,7 @@ case "$LIVESTREAM_PLATFORM" in
 			if [ "${DOWNLOAD_PROXY}" = "" ]; then
 				streamlink --stream-segment-attempts 25 --stream-timeout 600 --hls-playlist-reload-attempts 50 -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}" "${LIVESTREAM_URL}" "${QUALITY}"
 			else
-				streamlink --http-proxy "$DOWNLOAD_PROXY" --stream-segment-attempts 25 --stream-timeout 600 --hls-playlist-reload-attempts 50 -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4" "${LIVESTREAM_URL}" "${QUALITY}"
+				streamlink --http-proxy "$DOWNLOAD_PROXY" --stream-segment-attempts 25 --stream-timeout 600 --hls-playlist-reload-attempts 50 -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}" "${LIVESTREAM_URL}" "${QUALITY}"
 			fi
 			ffmpeg -nostdin -y -loglevel "repeat+info" -i "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}" -map 0 -dn -ignore_unknown -c copy -f mp4 "-bsf:a" aac_adtstoasc -movflags "+faststart" "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4"
 			rm "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}"
