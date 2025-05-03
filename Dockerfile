@@ -71,8 +71,9 @@ RUN ./dotnet-install.sh --channel 8.0
 RUN ./build-dotnet.sh
 
 # main image
-FROM alpine:3.17 AS base
+FROM python:alpine AS base
 RUN apk add --no-cache ffmpeg icu
+RUN pip install -U streamlink
 
 FROM base
 WORKDIR /app
