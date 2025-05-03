@@ -52,7 +52,7 @@ func main() {
 	}
 
 	var vod dggarchivermodel.VOD
-	err = json.Unmarshal([]byte(vodBytes), &vod)
+	err = json.Unmarshal(vodBytes, &vod)
 	if err != nil {
 		log.Fatalf("Error unmarshalling the VOD info: %s", err)
 	}
