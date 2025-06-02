@@ -14,6 +14,8 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] VERBOSE: $VERBOSE"
 
 set -Eeuo pipefail
 
+echo "$LIVESTREAM_INFO" > "$(pwd)/info.json"
+
 # start downloading strim
 case "$LIVESTREAM_PLATFORM" in
 	"youtube" )
@@ -72,4 +74,4 @@ case "$LIVESTREAM_PLATFORM" in
 esac
 
 # start processing
-worker /videos/"${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}".mp4
+worker "$(pwd)/info.json" /videos/"${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}".mp4

@@ -1,13 +1,11 @@
 package config
 
 import (
-	"encoding/json"
 	"os"
 	"strings"
 	"time"
 
 	log "github.com/DggHQ/dggarchiver-logger"
-	dggarchivermodel "github.com/DggHQ/dggarchiver-model"
 	"github.com/joho/godotenv"
 	"github.com/nats-io/nats.go"
 )
@@ -25,7 +23,6 @@ type NATSConfig struct {
 type Config struct {
 	Flags      Flags
 	NATSConfig NATSConfig
-	VOD        dggarchivermodel.VOD
 }
 
 func (cfg *Config) loadDotEnv() {
@@ -48,16 +45,6 @@ func (cfg *Config) loadDotEnv() {
 	cfg.NATSConfig.Topic = os.Getenv("NATS_TOPIC")
 	if cfg.NATSConfig.Topic == "" {
 		log.Fatalf("Please set the NATS_TOPIC environment variable and restart the app")
-	}
-
-	// VOD
-	vod := os.Getenv("LIVESTREAM_INFO")
-	if vod == "" {
-		log.Fatalf("Please set the LIVESTREAM_INFO environment variable and restart the app")
-	}
-	err := json.Unmarshal([]byte(vod), &cfg.VOD)
-	if err != nil {
-		log.Fatalf("Error unmarshalling the VOD info: %s", err)
 	}
 
 	log.Debugf("Environment variables loaded successfully")
