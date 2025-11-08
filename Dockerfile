@@ -5,6 +5,8 @@ ARG YTARCHIVE_VERSION='dev2'
 ARG YTDLP_VERSION='2025.10.22'
 # https://github.com/nilaoda/N_m3u8DL-RE/releases/latest
 ARG M3U8DL_VERSION='v0.5.1-beta'
+# https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest
+ARG BGUTIL_VERSION='v0.5.3'
 
 # building the main executable
 FROM golang:alpine AS builder-base
@@ -70,6 +72,18 @@ RUN chmod +x ./dotnet-install.sh
 RUN ./dotnet-install.sh --channel 9.0
 RUN ./build-dotnet.sh
 
+# building bgutil-pot
+FROM ghcr.io/jim60105/bgutil-pot:${BGUTIL_VERSION} AS builder-bgutil-pot-amd64
+
+FROM rust:alpine3.22 AS builder-bgutil-pot-arm64
+WORKDIR /build
+RUN git clone https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs.git --single-branch --branch ${BGUTIL_VERSION} .
+RUN cargo build --release
+RUN mv /build/target/bgutil-pot /bgutil-pot
+RUN mv /build/plugin /client
+
+FROM builder-bgutil-pot-${TARGETARCH} AS builder-bgutil-pot
+
 # main image
 FROM python:alpine AS base
 RUN apk add --no-cache ffmpeg icu jq
@@ -84,6 +98,6 @@ COPY --chmod=0755 ./scripts/run-worker.sh /usr/bin/run-worker
 COPY --from=builder-ytarchive /go/bin/ytarchive /usr/bin/
 COPY --from=builder-ytdlp /build/dist/yt-dlp /usr/bin/
 COPY --from=builder-m3u8dl /build/artifacts/N_m3u8DL-RE /usr/bin/
-COPY --from=ghcr.io/jim60105/bgutil-pot:latest /bgutil-pot /usr/bin/
-COPY --from=ghcr.io/jim60105/bgutil-pot:latest /client /etc/yt-dlp-plugins/bgutil-ytdlp-pot-provider
+COPY --from=builder-bgutil-pot /bgutil-pot /usr/bin/
+COPY --from=builder-bgutil-pot /client /etc/yt-dlp-plugins/bgutil-ytdlp-pot-provider
 CMD ["run-worker"]
