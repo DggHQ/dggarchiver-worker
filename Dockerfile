@@ -72,7 +72,7 @@ RUN ./build-dotnet.sh
 
 # main image
 FROM python:alpine AS base
-RUN apk add --no-cache ffmpeg icu
+RUN apk add --no-cache ffmpeg icu jq
 RUN pip install -U streamlink
 
 FROM base
@@ -84,4 +84,6 @@ COPY --chmod=0755 ./scripts/run-worker.sh /usr/bin/run-worker
 COPY --from=builder-ytarchive /go/bin/ytarchive /usr/bin/
 COPY --from=builder-ytdlp /build/dist/yt-dlp /usr/bin/
 COPY --from=builder-m3u8dl /build/artifacts/N_m3u8DL-RE /usr/bin/
+COPY --from=ghcr.io/jim60105/bgutil-pot:latest /bgutil-pot /usr/bin/
+COPY --from=ghcr.io/jim60105/bgutil-pot:latest /client /etc/yt-dlp-plugins/bgutil-ytdlp-pot-provider
 CMD ["run-worker"]
