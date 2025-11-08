@@ -80,7 +80,7 @@ FROM rust:alpine3.22 AS builder-bgutil-pot-arm64
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-bgutil-pot"
 ARG BGUTIL_VERSION
 WORKDIR /build
-RUN apk add --no-cache musl-dev git
+RUN apk add --no-cache musl-dev openssl openssl-dev git
 RUN git clone https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs.git --single-branch --branch ${BGUTIL_VERSION} .
 RUN cargo build --release
 RUN mv /build/target/bgutil-pot /bgutil-pot
