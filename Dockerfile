@@ -74,8 +74,11 @@ RUN ./build-dotnet.sh
 
 # building bgutil-pot
 FROM ghcr.io/jim60105/bgutil-pot:${BGUTIL_VERSION} AS builder-bgutil-pot-amd64
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-bgutil-pot"
 
 FROM rust:alpine3.22 AS builder-bgutil-pot-arm64
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-bgutil-pot"
+ARG BGUTIL_VERSION
 WORKDIR /build
 RUN apk add --no-cache git
 RUN git clone https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs.git --single-branch --branch ${BGUTIL_VERSION} .
@@ -84,6 +87,7 @@ RUN mv /build/target/bgutil-pot /bgutil-pot
 RUN mv /build/plugin /client
 
 FROM builder-bgutil-pot-${TARGETARCH} AS builder-bgutil-pot
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-bgutil-pot"
 
 # main image
 FROM python:alpine AS base
