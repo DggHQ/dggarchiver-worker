@@ -2,9 +2,9 @@
 # https://github.com/Kethsar/ytarchive/releases/latest
 ARG YTARCHIVE_VERSION='dev2'
 # https://github.com/yt-dlp/yt-dlp/releases/latest
-ARG YTDLP_VERSION='2024.07.09'
+ARG YTDLP_VERSION='2025.10.22'
 # https://github.com/nilaoda/N_m3u8DL-RE/releases/latest
-ARG M3U8DL_VERSION='v0.2.0-beta'
+ARG M3U8DL_VERSION='v0.5.1-beta'
 
 # building the main executable
 FROM golang:alpine AS builder-base
@@ -67,7 +67,7 @@ WORKDIR /build
 COPY --chmod=0755 ./scripts/build-dotnet.sh .
 RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
 RUN chmod +x ./dotnet-install.sh
-RUN ./dotnet-install.sh --channel 8.0
+RUN ./dotnet-install.sh --channel 9.0
 RUN ./build-dotnet.sh
 
 # main image
