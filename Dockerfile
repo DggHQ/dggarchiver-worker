@@ -77,6 +77,7 @@ FROM ghcr.io/jim60105/bgutil-pot:${BGUTIL_VERSION} AS builder-bgutil-pot-amd64
 
 FROM rust:alpine3.22 AS builder-bgutil-pot-arm64
 WORKDIR /build
+RUN apk add --no-cache git
 RUN git clone https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs.git --single-branch --branch ${BGUTIL_VERSION} .
 RUN cargo build --release
 RUN mv /build/target/bgutil-pot /bgutil-pot
