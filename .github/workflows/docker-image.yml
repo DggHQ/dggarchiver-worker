@@ -7,10 +7,7 @@ on:
     branches: [ "main", "devel" ]
 
 env:
-  # The name of the Docker image to be built and pushed to GHCR
-  # The image name is derived from the GitHub repository name and the GitHub Container Registry (GHCR) URL.
-  # The image name will be in the format: ghcr.io/<owner>/<repo>
-  GHCR_IMAGE: ghcr.io/${{ github.repository }}
+  REPO: ${{ github.repository }}
 
 permissions:
   # Global permissions for the workflow, which can be overridden at the job level
@@ -61,6 +58,10 @@ jobs:
     name: Build Docker image for ${{ matrix.platform }}
 
     steps:
+      - name: downcase REPO
+        run: |
+          echo "GHCR_IMAGE=ghcr.io/${REPO,,}" >>${GITHUB_ENV}
+
       -
         name: Prepare environment for current platform 
         # This step sets up the environment for the current platform being built.
@@ -183,6 +184,10 @@ jobs:
       # This job depends on the build job to complete before it starts.
       # It ensures that the Docker images for all platforms are built before merging the manifests.
     steps:
+      - name: downcase REPO
+        run: |
+          echo "GHCR_IMAGE=ghcr.io/${REPO,,}" >>${GITHUB_ENV}
+
       - name: Download digests
         # This step downloads the digest files uploaded in the build job.
         # It uses the actions/download-artifact action to download the artifacts with the pattern digests-*.
