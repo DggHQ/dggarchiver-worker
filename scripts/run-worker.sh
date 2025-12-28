@@ -22,7 +22,7 @@ case "$LIVESTREAM_PLATFORM" in
 		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [YT] Recording $LIVESTREAM_ID with ${LIVESTREAM_DOWNLOADER}..."
 		if [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp" ]; then
 			yt-dlp --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 -f "$QUALITY" -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
-		if [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp/live-from-start" ]; then
+		elif [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp/live-from-start" ]; then
 			yt-dlp --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 -f "$QUALITY" --live-from-start -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp/piped" ]; then
 			PIPED_URL=$(curl -s "https://pipedapi.kavin.rocks/streams/$LIVESTREAM_ID" | jq -r .hls)
