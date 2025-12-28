@@ -22,6 +22,8 @@ case "$LIVESTREAM_PLATFORM" in
 		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [YT] Recording $LIVESTREAM_ID with ${LIVESTREAM_DOWNLOADER}..."
 		if [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp" ]; then
 			yt-dlp --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 -f "$QUALITY" -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
+		if [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp/live-from-start" ]; then
+			yt-dlp --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 -f "$QUALITY" --live-from-start -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp/piped" ]; then
 			PIPED_URL=$(curl -s "https://pipedapi.kavin.rocks/streams/$LIVESTREAM_ID" | jq -r .hls)
 			yt-dlp --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --downloader ffmpeg --hls-use-mpegts --downloader-args "ffmpeg_i:-nostdin -max_reload 2000 -m3u8_hold_counters 2000 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_on_network_error 1 -reconnect_on_http_error 5xx -reconnect_delay_max 256" -f "$QUALITY"  -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$PIPED_URL"
