@@ -100,6 +100,10 @@ jobs:
       # This job depends on the build job to complete before it starts.
       # It ensures that the Docker images for all platforms are built before merging the manifests.
     steps:
+      - name: downcase REPO
+        run: |
+          echo "GHCR_IMAGE=ghcr.io/${IMAGE_NAME,,}" >>${GITHUB_ENV}
+
       - name: Download digests
         # This step downloads the digest files uploaded in the build job.
         # It uses the actions/download-artifact action to download the artifacts with the pattern digests-*.
