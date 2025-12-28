@@ -9,7 +9,6 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  GHCR_IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
   build:
@@ -28,6 +27,10 @@ jobs:
       packages: write
 
     steps:
+      - name: downcase REPO
+        run: |
+          echo "GHCR_IMAGE=ghcr.io/${IMAGE_NAME,,}" >>${GITHUB_ENV}
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -54,7 +57,7 @@ jobs:
           context: .
           platforms: linux/${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
+          outputs: type=image,name=${{ env.GHCR_IMAGE }},push-by-digest=true,name-canonical=true,push=true,oci-mediatypes=true
           cache-from: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
           cache-to: type=gha,scope=${{ github.repository }}-${{ github.ref_name }}-${{ matrix.platform }}
 
