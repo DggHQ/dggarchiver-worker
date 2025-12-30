@@ -32,11 +32,11 @@ case "$LIVESTREAM_PLATFORM" in
 			rm "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.mp4"
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "ytarchive" ]; then
 			if [ "${DOWNLOAD_PROXY}" = "" ]; then
-				PO_TOKEN=$(bgutil-pot --content-binding "$LIVESTREAM_ID" | jq -r .poToken)
+				PO_TOKEN=$(bgutil-pot --content-binding \""$LIVESTREAM_ID"\" | jq -r .poToken)
 				export PO_TOKEN
 				ytarchive --newline --potoken "$PO_TOKEN" --threads 6 -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s" "$LIVESTREAM_URL" "$QUALITY"
 			else
-				PO_TOKEN=$(bgutil-pot --content-binding "$LIVESTREAM_ID" --proxy "${DOWNLOAD_PROXY}" | jq -r .poToken)
+				PO_TOKEN=$(bgutil-pot --content-binding \""$LIVESTREAM_ID"\" --proxy "${DOWNLOAD_PROXY}" | jq -r .poToken)
 				export PO_TOKEN
 				ytarchive --proxy "$DOWNLOAD_PROXY" --newline --potoken "$PO_TOKEN" --threads 6 -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s" "$LIVESTREAM_URL" "$QUALITY"
 			fi
