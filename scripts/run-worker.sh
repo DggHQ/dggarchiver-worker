@@ -42,9 +42,9 @@ case "$LIVESTREAM_PLATFORM" in
 			fi
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "livestream_dl" ]; then
 			if [ -f "/videos/cookies.txt" ]; then
-				livestream_dl/venv/bin/python livestream_dl/runner.py --cookies /videos/cookies.txt --proxy "$DOWNLOAD_PROXY" --ext "mp4" --ytdlp-options '{"extractor_args":{"youtubepot-bgutilscript":{"script_path":["/usr/bin/bgutil-pot"]}}}' --threads 4 --resolution "$QUALITY" --segment-retries 25 --output "/videos/${LIVESTREAM_PLATFORM}_%(id)s" --log-level "VERBOSE" --new-line -- \""$LIVESTREAM_ID"\"
+				livestream_dl/venv/bin/python livestream_dl/runner.py --cookies /videos/cookies.txt --proxy "$DOWNLOAD_PROXY" --ext "mp4" --ytdlp-options '{"extractor_args":{"youtubepot-bgutilscript":{"script_path":["/usr/bin/bgutil-pot"]}}}' --threads 4 --resolution "$QUALITY" --segment-retries 25 --output "/videos/${LIVESTREAM_PLATFORM}_%(id)s" --log-level "VERBOSE" --new-line -- "$LIVESTREAM_ID"
 			else
-				livestream_dl/venv/bin/python livestream_dl/runner.py --proxy "$DOWNLOAD_PROXY" --ext "mp4" --ytdlp-options '{"extractor_args":{"youtubepot-bgutilscript":{"script_path":["/usr/bin/bgutil-pot"]}}}' --threads 4 --resolution "$QUALITY" --segment-retries 25 --output "/videos/${LIVESTREAM_PLATFORM}_%(id)s" --log-level "VERBOSE" --new-line -- \""$LIVESTREAM_ID"\"
+				livestream_dl/venv/bin/python livestream_dl/runner.py --proxy "$DOWNLOAD_PROXY" --ext "mp4" --ytdlp-options '{"extractor_args":{"youtubepot-bgutilscript":{"script_path":["/usr/bin/bgutil-pot"]}}}' --threads 4 --resolution "$QUALITY" --segment-retries 25 --output "/videos/${LIVESTREAM_PLATFORM}_%(id)s" --log-level "VERBOSE" --new-line -- "$LIVESTREAM_ID"
 			fi
 		else
 			yt-dlp -vvv --newline --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --fragment-retries 25 -f "$QUALITY" -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
