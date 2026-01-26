@@ -40,6 +40,8 @@ case "$LIVESTREAM_PLATFORM" in
 				export PO_TOKEN
 				ytarchive --proxy "$DOWNLOAD_PROXY" --newline --potoken "$PO_TOKEN" --threads 6 -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s" "$LIVESTREAM_URL" "$QUALITY"
 			fi
+		elif [ "${LIVESTREAM_DOWNLOADER}" = "livestream_dl" ]; then
+			livestream_dl/venv/bin/python livestream_dl/runner.py --proxy "$DOWNLOAD_PROXY" --ext "mp4" --ytdlp-options '{"extractor_args":{"youtubepot-bgutilscript":{"script_path":["/usr/bin/bgutil-pot"]}}}' --threads 4 --resolution "$QUALITY" --segment-retries 25 --output "${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" --log-level "VERBOSE" --new-line -- \""$LIVESTREAM_ID"\"
 		else
 			yt-dlp -vvv --newline --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --fragment-retries 25 -f "$QUALITY" -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		fi
