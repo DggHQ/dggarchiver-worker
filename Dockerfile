@@ -2,12 +2,14 @@
 # https://github.com/Kethsar/ytarchive/releases/latest
 ARG YTARCHIVE_VERSION='dev2'
 # https://github.com/yt-dlp/yt-dlp/releases/latest
-ARG YTDLP_VERSION='2024.07.09'
+ARG YTDLP_VERSION='2025.12.08'
 # https://github.com/nilaoda/N_m3u8DL-RE/releases/latest
-ARG M3U8DL_VERSION='v0.2.0-beta'
+ARG M3U8DL_VERSION='v0.5.1-beta'
+# https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest
+ARG BGUTIL_VERSION='v0.6.1'
 
 # building the main executable
-FROM golang:alpine AS builder-base
+FROM golang:alpine3.23 AS builder-base
 LABEL builder=true multistage_tag="dggarchiver-worker-builder"
 RUN apk add --no-cache upx ca-certificates tzdata
 
@@ -32,48 +34,79 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go build -tags netgo -trimpath
 RUN upx --best --lzma worker
 
 # building ytarchive
-FROM golang:alpine AS builder-ytarchive
+FROM golang:alpine3.23 AS builder-ytarchive
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-ytarchive"
 ARG TARGETARCH
 ARG YTARCHIVE_VERSION
 WORKDIR /build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=${TARGETARCH} go install github.com/vyneer/ytarchive@${YTARCHIVE_VERSION}
 
-# building yt-dlp
-FROM python:alpine3.17 AS builder-ytdlp
+# downloading yt-dlp
+FROM alpine:3.23 AS builder-ytdlp-amd64
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-ytdlp"
 ARG YTDLP_VERSION
 WORKDIR /build
-RUN apk add --no-cache git ffmpeg binutils
-RUN git clone https://github.com/yt-dlp/yt-dlp.git --single-branch --branch ${YTDLP_VERSION} .
-RUN python3 devscripts/install_deps.py --include pyinstaller
-RUN python3 devscripts/make_lazy_extractors.py
-RUN python3 -m bundle.pyinstaller --name=yt-dlp
+RUN apk add --no-cache wget
+RUN wget -O /usr/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp_musllinux
+RUN chmod +x /usr/bin/yt-dlp
 
-# building N_m3u8DL-RE
-FROM mcr.microsoft.com/dotnet-buildtools/prereqs:alpine-3.17 AS builder-dotnet-amd64
-LABEL builder=true multistage_tag="dggarchiver-worker-builder-m3u8dl"
-RUN apk add --no-cache upx
+FROM alpine:3.23 AS builder-ytdlp-arm64
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-ytdlp"
+ARG YTDLP_VERSION
+WORKDIR /build
+RUN apk add --no-cache wget
+RUN wget -O /usr/bin/yt-dlp https://github.com/yt-dlp/yt-dlp/releases/download/${YTDLP_VERSION}/yt-dlp_linux_aarch64
+RUN chmod +x /usr/bin/yt-dlp
 
-FROM mcr.microsoft.com/dotnet-buildtools/prereqs:ubuntu-22.04-cross-arm64-alpine AS builder-dotnet-arm64
+FROM builder-ytdlp-${TARGETARCH} AS builder-ytdlp
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-ytdlp"
+
+# downloading N_m3u8DL-RE
+FROM alpine:3.23 AS builder-dotnet-amd64
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-m3u8dl"
-RUN apt-get update && apt-get install -y upx
+ARG M3U8DL_VERSION
+RUN apk add --no-cache curl jq
+RUN wget -O m3u8DL.tar.gz $(curl --silent 'https://api.github.com/repos/nilaoda/N_m3u8DL-RE/releases/latest' | jq -r --arg VERSION "N_m3u8DL-RE_${M3U8DL_VERSION}_linux-musl-x64" '.assets[] | select(.name | startswith($VERSION)) .browser_download_url')
+RUN tar xzvf m3u8DL.tar.gz && mv N_m3u8DL-RE /usr/bin/N_m3u8DL-RE
+
+FROM alpine:3.23 AS builder-dotnet-arm64
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-m3u8dl"
+ARG M3U8DL_VERSION
+RUN apk add --no-cache curl jq
+RUN wget -O m3u8DL.tar.gz $(curl --silent 'https://api.github.com/repos/nilaoda/N_m3u8DL-RE/releases/latest' | jq -r --arg VERSION "N_m3u8DL-RE_${M3U8DL_VERSION}_linux-arm64" '.assets[] | select(.name | startswith($VERSION)) .browser_download_url')
+RUN tar xzvf m3u8DL.tar.gz && mv N_m3u8DL-RE /usr/bin/N_m3u8DL-RE
 
 FROM builder-dotnet-${TARGETARCH} AS builder-m3u8dl
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-m3u8dl"
-ARG TARGETARCH
-ARG M3U8DL_VERSION
+
+# building bgutil-pot
+FROM ghcr.io/jim60105/bgutil-pot:${BGUTIL_VERSION} AS builder-bgutil-pot-amd64
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-bgutil-pot"
+
+FROM rust:slim-trixie AS builder-bgutil-pot-arm64
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-bgutil-pot"
+ARG BGUTIL_VERSION
 WORKDIR /build
-COPY --chmod=0755 ./scripts/build-dotnet.sh .
-RUN wget https://dot.net/v1/dotnet-install.sh -O dotnet-install.sh
-RUN chmod +x ./dotnet-install.sh
-RUN ./dotnet-install.sh --channel 8.0
-RUN ./build-dotnet.sh
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y git pkg-config libssl-dev curl
+RUN git clone https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs.git --single-branch --branch ${BGUTIL_VERSION} .
+RUN cargo build --release
+RUN mv /build/target/release/bgutil-pot /bgutil-pot
+RUN mv /build/plugin /client
+
+FROM builder-bgutil-pot-${TARGETARCH} AS builder-bgutil-pot
+LABEL builder=true multistage_tag="dggarchiver-worker-builder-bgutil-pot"
 
 # main image
-FROM python:alpine AS base
-RUN apk add --no-cache ffmpeg icu
+FROM python:alpine3.23 AS base-amd64
+RUN apk add --no-cache ffmpeg icu jq deno
 RUN pip install -U streamlink
+
+FROM python:slim-trixie AS base-arm64
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ffmpeg libicu76 jq curl unzip
+RUN curl -fsSL https://deno.land/install.sh | sh
+RUN pip install -U streamlink
+
+FROM base-${TARGETARCH} AS base
 
 FROM base
 WORKDIR /app
@@ -82,6 +115,8 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certifi
 COPY --from=builder /build/worker /usr/bin/
 COPY --chmod=0755 ./scripts/run-worker.sh /usr/bin/run-worker
 COPY --from=builder-ytarchive /go/bin/ytarchive /usr/bin/
-COPY --from=builder-ytdlp /build/dist/yt-dlp /usr/bin/
-COPY --from=builder-m3u8dl /build/artifacts/N_m3u8DL-RE /usr/bin/
+COPY --from=builder-ytdlp /usr/bin/yt-dlp /usr/bin/
+COPY --from=builder-m3u8dl /usr/bin/N_m3u8DL-RE /usr/bin/
+COPY --from=builder-bgutil-pot /bgutil-pot /usr/bin/
+COPY --from=builder-bgutil-pot /client /etc/yt-dlp-plugins/bgutil-ytdlp-pot-provider
 CMD ["run-worker"]
