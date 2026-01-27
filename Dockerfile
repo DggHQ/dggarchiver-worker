@@ -131,4 +131,5 @@ COPY --from=builder-ytdlp /usr/bin/yt-dlp /usr/bin/
 COPY --from=builder-m3u8dl /usr/bin/N_m3u8DL-RE /usr/bin/
 COPY --from=builder-bgutil-pot /bgutil-pot /usr/bin/
 COPY --from=builder-bgutil-pot /client /etc/yt-dlp-plugins/bgutil-ytdlp-pot-provider
+RUN yt-dlp --update-to nightly@2026.01.25.233128
 CMD ["run-worker"]
