@@ -21,9 +21,17 @@ case "$LIVESTREAM_PLATFORM" in
 	"youtube" )
 		echo "[$(date '+%Y-%m-%d %H:%M:%S')] [YT] Recording $LIVESTREAM_ID with ${LIVESTREAM_DOWNLOADER}..."
 		if [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp" ]; then
-			yt-dlp -vvv --newline --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --fragment-retries 25 -f "$QUALITY" -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
+			if [ -f "/videos/cookies.txt" ]; then
+				yt-dlp -vvv --newline --cookies /videos/cookies.txt --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --fragment-retries 25 -f "$QUALITY" -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
+			else
+				yt-dlp -vvv --newline --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --fragment-retries 25 -f "$QUALITY" -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
+			fi
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp/live-from-start" ]; then
-			yt-dlp -vvv --newline --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --fragment-retries 25 -N 4 -f "$QUALITY" --live-from-start -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" --exec "worker $(pwd)/info.json /videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4" "$LIVESTREAM_URL"
+			if [ -f "/videos/cookies.txt" ]; then
+				yt-dlp -vvv --newline --cookies /videos/cookies.txt --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --fragment-retries 25 -N 4 -f "$QUALITY" --live-from-start -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" --exec "worker $(pwd)/info.json /videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4" "$LIVESTREAM_URL"
+			else
+				yt-dlp -vvv --newline --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --fragment-retries 25 -N 4 -f "$QUALITY" --live-from-start -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" --exec "worker $(pwd)/info.json /videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4" "$LIVESTREAM_URL"
+			fi
 			return
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp/piped" ]; then
 			PIPED_URL=$(curl -s "https://pipedapi.kavin.rocks/streams/$LIVESTREAM_ID" | jq -r .hls)
