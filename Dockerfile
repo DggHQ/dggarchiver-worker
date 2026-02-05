@@ -2,7 +2,7 @@
 # https://github.com/Kethsar/ytarchive/releases/latest
 ARG YTARCHIVE_VERSION='dev2'
 # https://github.com/yt-dlp/yt-dlp/releases/latest
-ARG YTDLP_VERSION='2025.12.08'
+ARG YTDLP_VERSION='2026.02.04'
 # https://github.com/nilaoda/N_m3u8DL-RE/releases/latest
 ARG M3U8DL_VERSION='v0.5.1-beta'
 # https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest
@@ -131,5 +131,4 @@ COPY --from=builder-ytdlp /usr/bin/yt-dlp /usr/bin/
 COPY --from=builder-m3u8dl /usr/bin/N_m3u8DL-RE /usr/bin/
 COPY --from=builder-bgutil-pot /bgutil-pot /usr/bin/
 COPY --from=builder-bgutil-pot /client /etc/yt-dlp-plugins/bgutil-ytdlp-pot-provider
-RUN yt-dlp --update-to nightly@2026.01.25.233128
 CMD ["run-worker"]
