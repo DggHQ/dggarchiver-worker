@@ -8,7 +8,7 @@ ARG M3U8DL_VERSION='v0.5.1-beta'
 # https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest
 ARG BGUTIL_VERSION='v0.6.1'
 # https://github.com/CanOfSocks/livestream_dl
-ARG LIVESTREAM_DL_VERSION='ac1dc9034b99475f169e02f50bb6c129f0adb344'
+ARG LIVESTREAM_DL_VERSION='adaa5d5d7070f549ea128f6e9d6b0fbb5518bcae'
 
 # building the main executable
 FROM golang:alpine3.23 AS builder-base
