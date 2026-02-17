@@ -2,11 +2,13 @@
 # https://github.com/Kethsar/ytarchive/releases/latest
 ARG YTARCHIVE_VERSION='dev2'
 # https://github.com/yt-dlp/yt-dlp/releases/latest
-ARG YTDLP_VERSION='2025.12.08'
+ARG YTDLP_VERSION='2026.02.04'
 # https://github.com/nilaoda/N_m3u8DL-RE/releases/latest
 ARG M3U8DL_VERSION='v0.5.1-beta'
 # https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest
 ARG BGUTIL_VERSION='v0.6.1'
+# https://github.com/CanOfSocks/livestream_dl
+ARG LIVESTREAM_DL_VERSION='945e3be31ae2b15314b98ba9b54f4ae125722623'
 
 # building the main executable
 FROM golang:alpine3.23 AS builder-base
@@ -98,13 +100,29 @@ LABEL builder=true multistage_tag="dggarchiver-worker-builder-bgutil-pot"
 
 # main image
 FROM python:alpine3.23 AS base-amd64
-RUN apk add --no-cache ffmpeg icu jq deno
+ARG LIVESTREAM_DL_VERSION
+WORKDIR /app
+RUN apk add --no-cache ffmpeg icu jq deno git
 RUN pip install -U streamlink
+RUN git clone https://github.com/CanOfSocks/livestream_dl.git
+RUN cd livestream_dl && git checkout ${LIVESTREAM_DL_VERSION} && cd ..
+RUN python -m venv livestream_dl/venv
+RUN livestream_dl/venv/bin/pip install -U -r livestream_dl/requirements.txt
+RUN livestream_dl/venv/bin/pip install -U httpx[socks] yt-dlp-ejs yt-dlp
+RUN sed -i "/if[[:space:]]\+fmt_stream\.get('targetDurationSec'):/,/^[[:space:]]*continue/s/^[[:space:]]*/&#/" "$(livestream_dl/venv/bin/pip show yt-dlp | awk '/Location/ {print $2}')/yt_dlp/extractor/youtube/_video.py"
 
 FROM python:slim-trixie AS base-arm64
-RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ffmpeg libicu76 jq curl unzip
+ARG LIVESTREAM_DL_VERSION
+WORKDIR /app
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ffmpeg libicu76 jq curl unzip git
 RUN curl -fsSL https://deno.land/install.sh | sh
 RUN pip install -U streamlink
+RUN git clone https://github.com/CanOfSocks/livestream_dl.git
+RUN cd livestream_dl && git checkout ${LIVESTREAM_DL_VERSION} && cd ..
+RUN python -m venv livestream_dl/venv
+RUN livestream_dl/venv/bin/pip install -U -r livestream_dl/requirements.txt
+RUN livestream_dl/venv/bin/pip install -U httpx[socks] yt-dlp-ejs yt-dlp
+RUN sed -i "/if[[:space:]]\+fmt_stream\.get('targetDurationSec'):/,/^[[:space:]]*continue/s/^[[:space:]]*/&#/" "$(livestream_dl/venv/bin/pip show yt-dlp | awk '/Location/ {print $2}')/yt_dlp/extractor/youtube/_video.py"
 
 FROM base-${TARGETARCH} AS base
 
