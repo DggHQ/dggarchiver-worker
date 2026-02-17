@@ -61,6 +61,7 @@ case "$LIVESTREAM_PLATFORM" in
 				livestream_dl/venv/bin/python livestream_dl/runner.py --dash --m3u8 --force-m3u8 --proxy "$DOWNLOAD_PROXY" --ext "mp4" --ytdlp-options '{"extractor_args":{"youtubepot-bgutilscript":{"script_path":["/usr/bin/bgutil-pot"]}}}' --threads 4 --resolution "$QUALITY" --segment-retries 25 --output "/videos/${LIVESTREAM_PLATFORM}_%(id)s" --log-level "VERBOSE" --new-line -- "$LIVESTREAM_ID"
 			fi
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "streamlink" ]; then
+			export TMP_EXTENSION='mp4'
 			if [ "${DOWNLOAD_PROXY}" = "" ]; then
 				if [ -f "/videos/cookies.txt" ]; then
 					streamlink --http-cookies-file /videos/cookies.txt --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}" "${LIVESTREAM_URL}" "${QUALITY}"
