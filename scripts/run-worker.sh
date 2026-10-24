@@ -126,7 +126,7 @@ case "$LIVESTREAM_PLATFORM" in
 				if [ -f "/videos/cookies.txt" ]; then
 					pipe_capture streamlink --http-proxy "$DOWNLOAD_PROXY" --http-cookies-file /videos/cookies.txt --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -O "${LIVESTREAM_URL}" "${QUALITY}"
 				else
-					pipe_capture streamlink --http-proxy "$DOWNLOAD_PROXY"  --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -O "${LIVESTREAM_URL}" "${QUALITY}"
+					pipe_capture streamlink --http-proxy "$DOWNLOAD_PROXY" --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -O "${LIVESTREAM_URL}" "${QUALITY}"
 				fi
 			fi
 		else
