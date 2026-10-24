@@ -26,7 +26,7 @@ MOVFLAGS="+hybrid_fragmented"
 
 STOPPING=0
 CAPTURE_PID=""
-STATUS_FILE="$(mktemp)"
+STATUS_FILE=""
 
 # PID 1 (ash) does not act on SIGTERM by default, so a trap is needed for `docker stop` to be
 # more than a delayed SIGKILL. A trap is delivered even to PID 1.
@@ -47,7 +47,7 @@ trap on_stop INT TERM
 # fail the job), and an operator stop is treated as success so the truncated recording is still
 # published.
 pipe_capture() {
-	: > "$STATUS_FILE"
+	STATUS_FILE="$(mktemp)"
 	(
 		set +e
 		"$@"
