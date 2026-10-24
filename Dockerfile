@@ -4,6 +4,9 @@ ARG YTARCHIVE_VERSION='dev2'
 # https://github.com/yt-dlp/yt-dlp/releases/latest
 ARG YTDLP_VERSION='2026.02.04'
 # https://github.com/nilaoda/N_m3u8DL-RE/releases/latest
+# v0.6.0-beta dropped the linux-musl builds, which the alpine (amd64) stage below needs, so this
+# pin cannot move to the latest release without changing base images. Bump to a release that still
+# ships linux-musl-x64 when updating.
 ARG M3U8DL_VERSION='v0.5.1-beta'
 # https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest
 ARG BGUTIL_VERSION='v0.6.1'
@@ -68,14 +71,18 @@ FROM alpine:3.23 AS builder-dotnet-amd64
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-m3u8dl"
 ARG M3U8DL_VERSION
 RUN apk add --no-cache curl jq
-RUN wget -O m3u8DL.tar.gz $(curl --silent 'https://api.github.com/repos/nilaoda/N_m3u8DL-RE/releases/latest' | jq -r --arg VERSION "N_m3u8DL-RE_${M3U8DL_VERSION}_linux-musl-x64" '.assets[] | select(.name | startswith($VERSION)) .browser_download_url')
+# Look the pinned tag up directly: /releases/latest only carries the newest release's assets, so a
+# pinned version that is no longer the latest resolves to an empty URL and wget fails.
+RUN url=$(curl -fsSL "https://api.github.com/repos/nilaoda/N_m3u8DL-RE/releases/tags/${M3U8DL_VERSION}" | jq -er --arg asset "N_m3u8DL-RE_${M3U8DL_VERSION}_linux-musl-x64" '[.assets[] | select(.name | startswith($asset))][0].browser_download_url') \
+	&& wget -O m3u8DL.tar.gz "$url"
 RUN tar xzvf m3u8DL.tar.gz && mv N_m3u8DL-RE /usr/bin/N_m3u8DL-RE
 
 FROM alpine:3.23 AS builder-dotnet-arm64
 LABEL builder=true multistage_tag="dggarchiver-worker-builder-m3u8dl"
 ARG M3U8DL_VERSION
 RUN apk add --no-cache curl jq
-RUN wget -O m3u8DL.tar.gz $(curl --silent 'https://api.github.com/repos/nilaoda/N_m3u8DL-RE/releases/latest' | jq -r --arg VERSION "N_m3u8DL-RE_${M3U8DL_VERSION}_linux-arm64" '.assets[] | select(.name | startswith($VERSION)) .browser_download_url')
+RUN url=$(curl -fsSL "https://api.github.com/repos/nilaoda/N_m3u8DL-RE/releases/tags/${M3U8DL_VERSION}" | jq -er --arg asset "N_m3u8DL-RE_${M3U8DL_VERSION}_linux-arm64" '[.assets[] | select(.name | startswith($asset))][0].browser_download_url') \
+	&& wget -O m3u8DL.tar.gz "$url"
 RUN tar xzvf m3u8DL.tar.gz && mv N_m3u8DL-RE /usr/bin/N_m3u8DL-RE
 
 FROM builder-dotnet-${TARGETARCH} AS builder-m3u8dl
