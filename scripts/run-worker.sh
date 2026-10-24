@@ -24,14 +24,6 @@ VIDEO_OUT="/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4"
 # shift at the end, which can exceed the stop grace period and leaves a broken file if killed.
 MOVFLAGS="+hybrid_fragmented"
 
-# Remux a stream arriving on stdin into the final MP4 in one pass, so the recording is only
-# ever written once and no full-size intermediate file reaches the disk.
-remux_to_final() {
-	ffmpeg -nostdin -y -loglevel "repeat+info" -i pipe:0 \
-		-map 0 -dn -ignore_unknown -c copy -f mp4 "-bsf:a" aac_adtstoasc \
-		-movflags "$MOVFLAGS" "$VIDEO_OUT"
-}
-
 STOPPING=0
 CAPTURE_PID=""
 STATUS_FILE="$(mktemp)"
@@ -46,17 +38,24 @@ on_stop() {
 }
 trap on_stop INT TERM
 
-# Run "<downloader> | remux_to_final" in the background so the trap above can run while it is
-# in progress. Preserves the downloader's exit status (a failed downloader must still fail the
-# job) and treats an operator stop as success, so the truncated recording is still published.
+# Run "<downloader> | ffmpeg" in the background so the trap above can run while it is in
+# progress. ffmpeg remuxes the stream arriving on stdin into the final MP4 in one pass, so the
+# recording is only ever written once and no full-size intermediate file reaches the disk.
+# The ffmpeg invocation is inlined instead of wrapped in a function: ash runs a function in the
+# last pipeline position in a subshell, so `$!` would be that subshell and not ffmpeg.
+# The downloader's exit status is preserved through STATUS_FILE (a failed downloader must still
+# fail the job), and an operator stop is treated as success so the truncated recording is still
+# published.
 pipe_capture() {
 	: > "$STATUS_FILE"
 	(
 		set +e
 		"$@"
 		echo $? > "$STATUS_FILE"
-	) | remux_to_final &
-	CAPTURE_PID=$! # last pipeline member = ffmpeg, which is the process that must finalize
+	) | ffmpeg -nostdin -y -loglevel "repeat+info" -i pipe:0 \
+		-map 0 -dn -ignore_unknown -c copy -f mp4 "-bsf:a" aac_adtstoasc \
+		-movflags "$MOVFLAGS" "$VIDEO_OUT" &
+	CAPTURE_PID=$! # ffmpeg, the process that has to receive the stop signal
 	set +e
 	wait "$CAPTURE_PID"; rc=$?
 	set -e
