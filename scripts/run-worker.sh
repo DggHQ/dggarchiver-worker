@@ -16,6 +16,64 @@ set -Eeuo pipefail
 
 echo "$LIVESTREAM_INFO" > "$(pwd)/info.json"
 
+VIDEO_OUT="/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4"
+
+# Container mode for piped captures. +hybrid_fragmented writes fragments while recording (so a
+# killed capture is still playable) and converts to a plain, non-fragmented MP4 in the trailer on
+# a clean or graceful end. +faststart is intentionally NOT used: it needs a full-file in-place
+# shift at the end, which can exceed the stop grace period and leaves a broken file if killed.
+MOVFLAGS="+hybrid_fragmented"
+
+# Remux a stream arriving on stdin into the final MP4 in one pass, so the recording is only
+# ever written once and no full-size intermediate file reaches the disk.
+remux_to_final() {
+	ffmpeg -nostdin -y -loglevel "repeat+info" -i pipe:0 \
+		-map 0 -dn -ignore_unknown -c copy -f mp4 "-bsf:a" aac_adtstoasc \
+		-movflags "$MOVFLAGS" "$VIDEO_OUT"
+}
+
+STOPPING=0
+CAPTURE_PID=""
+STATUS_FILE="$(mktemp)"
+
+# PID 1 (ash) does not act on SIGTERM by default, so a trap is needed for `docker stop` to be
+# more than a delayed SIGKILL. A trap is delivered even to PID 1.
+on_stop() {
+	STOPPING=1
+	if [ -n "$CAPTURE_PID" ]; then
+		kill -TERM "$CAPTURE_PID" 2>/dev/null || true
+	fi
+}
+trap on_stop INT TERM
+
+# Run "<downloader> | remux_to_final" in the background so the trap above can run while it is
+# in progress. Preserves the downloader's exit status (a failed downloader must still fail the
+# job) and treats an operator stop as success, so the truncated recording is still published.
+pipe_capture() {
+	: > "$STATUS_FILE"
+	(
+		set +e
+		"$@"
+		echo $? > "$STATUS_FILE"
+	) | remux_to_final &
+	CAPTURE_PID=$! # last pipeline member = ffmpeg, which is the process that must finalize
+	set +e
+	wait "$CAPTURE_PID"; rc=$?
+	set -e
+	if [ "$STOPPING" = 1 ]; then
+		# the wait above was interrupted by the stop, so let ffmpeg write the trailer
+		wait "$CAPTURE_PID" 2>/dev/null || true
+		CAPTURE_PID=""
+		rm -f "$STATUS_FILE"
+		return 0
+	fi
+	CAPTURE_PID=""
+	status="$(cat "$STATUS_FILE" 2>/dev/null || echo 1)"
+	rm -f "$STATUS_FILE"
+	[ "$status" = 0 ] || return 1
+	return "$rc"
+}
+
 # start downloading strim
 case "$LIVESTREAM_PLATFORM" in
 	"youtube" )
@@ -129,4 +187,4 @@ case "$LIVESTREAM_PLATFORM" in
 esac
 
 # start processing
-worker "$(pwd)/info.json" /videos/"${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}".mp4
+worker "$(pwd)/info.json" "$VIDEO_OUT"
