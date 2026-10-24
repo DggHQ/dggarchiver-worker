@@ -93,9 +93,7 @@ case "$LIVESTREAM_PLATFORM" in
 			return
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "yt-dlp/piped" ]; then
 			PIPED_URL=$(curl -s "https://pipedapi.kavin.rocks/streams/$LIVESTREAM_ID" | jq -r .hls)
-			yt-dlp --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --downloader ffmpeg --hls-use-mpegts --downloader-args "ffmpeg_i:-nostdin -max_reload 2000 -m3u8_hold_counters 2000 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_on_network_error 1 -reconnect_on_http_error 5xx -reconnect_delay_max 256" -f "$QUALITY"  -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.%(ext)s" "$PIPED_URL"
-			ffmpeg -nostdin -y -loglevel "repeat+info" -i "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.mp4" -map 0 -dn -ignore_unknown -c copy -f mp4 "-bsf:a" aac_adtstoasc -movflags "+faststart" "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4"
-			rm "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.mp4"
+			pipe_capture yt-dlp --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --downloader ffmpeg --hls-use-mpegts --downloader-args "ffmpeg_i:-nostdin -max_reload 2000 -m3u8_hold_counters 2000 -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_on_network_error 1 -reconnect_on_http_error 5xx -reconnect_delay_max 256" -f "$QUALITY" -o - "$PIPED_URL"
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "ytarchive" ]; then
 			if [ "${DOWNLOAD_PROXY}" = "" ]; then
 				PO_TOKEN=$(bgutil-pot --content-binding \""$LIVESTREAM_ID"\" | jq -r .poToken)
@@ -119,22 +117,19 @@ case "$LIVESTREAM_PLATFORM" in
 				livestream_dl/venv/bin/python livestream_dl/runner.py --dash --m3u8 --force-m3u8 --proxy "$DOWNLOAD_PROXY" --ext "mp4" --ytdlp-options '{"extractor_args":{"youtubepot-bgutilscript":{"script_path":["/usr/bin/bgutil-pot"]}}}' --threads 4 --resolution "$QUALITY" --segment-retries 25 --output "/videos/${LIVESTREAM_PLATFORM}_%(id)s" --log-level "VERBOSE" --new-line -- "$LIVESTREAM_ID"
 			fi
 		elif [ "${LIVESTREAM_DOWNLOADER}" = "streamlink" ]; then
-			export TMP_EXTENSION='mp4'
 			if [ "${DOWNLOAD_PROXY}" = "" ]; then
 				if [ -f "/videos/cookies.txt" ]; then
-					streamlink --http-cookies-file /videos/cookies.txt --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}" "${LIVESTREAM_URL}" "${QUALITY}"
+					pipe_capture streamlink --http-cookies-file /videos/cookies.txt --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -O "${LIVESTREAM_URL}" "${QUALITY}"
 				else
-					streamlink --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}" "${LIVESTREAM_URL}" "${QUALITY}"
+					pipe_capture streamlink --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -O "${LIVESTREAM_URL}" "${QUALITY}"
 				fi
 			else
 				if [ -f "/videos/cookies.txt" ]; then
-					streamlink --http-proxy "$DOWNLOAD_PROXY" --http-cookies-file /videos/cookies.txt --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}" "${LIVESTREAM_URL}" "${QUALITY}"
+					pipe_capture streamlink --http-proxy "$DOWNLOAD_PROXY" --http-cookies-file /videos/cookies.txt --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -O "${LIVESTREAM_URL}" "${QUALITY}"
 				else
-					streamlink --http-proxy "$DOWNLOAD_PROXY"  --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -o "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}" "${LIVESTREAM_URL}" "${QUALITY}"
+					pipe_capture streamlink --http-proxy "$DOWNLOAD_PROXY"  --stream-segment-attempts 10 --stream-timeout 120 --hls-playlist-reload-attempts 25 -O "${LIVESTREAM_URL}" "${QUALITY}"
 				fi
 			fi
-			ffmpeg -nostdin -y -loglevel "repeat+info" -i "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}" -map 0 -dn -ignore_unknown -c copy -f mp4 "-bsf:a" aac_adtstoasc -movflags "+faststart" "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}.mp4"
-			rm "/videos/${LIVESTREAM_PLATFORM}_${LIVESTREAM_ID}_temp.${TMP_EXTENSION}"
 		else
 			yt-dlp -vvv --newline --extractor-args "youtubepot-bgutilscript:script_path=/usr/bin/bgutil-pot" --proxy "$DOWNLOAD_PROXY" --retries 25 --file-access-retries 25 --fragment-retries 25 -f "$QUALITY" -o "/videos/${LIVESTREAM_PLATFORM}_%(id)s.%(ext)s" "$LIVESTREAM_URL"
 		fi
